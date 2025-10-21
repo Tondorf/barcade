@@ -2,9 +2,9 @@ all: snake.wasm
 
 snake.wasm: snake.c
 	clang \
-	--target=wasm32 \
-	-O3 -nostdlib \
+	-O3 \
 	-Wall -Wextra -Werror \
+	--target=wasm32 -nostdlib \
 	-Wl,--no-entry \
 	-Wl,--export=tick \
 	-Wl,--export=add_action \
