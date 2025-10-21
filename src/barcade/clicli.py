@@ -1,3 +1,6 @@
+import argparse
+import pathlib
+import random
 import select
 import sys
 import termios
@@ -45,13 +48,21 @@ def _println(msg="", *, flush=False):
 
 
 def main(fps=40):
-    _println("Loading...\n", flush=True)
+    parser = argparse.ArgumentParser(
+        description="Run a Barcade WASM game in the terminal."
+    )
+    parser.add_argument("wasm_file", type=pathlib.Path, help="The WASM file to run")
+    args = parser.parse_args()
 
-    game = barcade.Snake()
+    _println("🭇" + "🬭" * 32 + "🬼")
+    _println("🭵" + f"Loading game from {args.wasm_file}...".center(32) + "🭰")
+    _println("🭢" + "🬂" * 32 + "🭗\n", flush=True)
 
-    action = None
+    game = barcade.WASMGame(args.wasm_file, seed=random.randint(0, 2**32 - 1))
+
     running = True
     while running:
+        action = None
         match _read_char(timeout=1 / fps):
             case "w":
                 action = Scancode.W
@@ -64,13 +75,18 @@ def main(fps=40):
             case "q" | "\x1b":
                 running = False
 
-        game.add_action(action)
+        if action is not None:
+            game.add_action(action)
+
         running &= game.tick(time.perf_counter())
 
-        _move_cursor_up(2)
+        _move_cursor_up(3)
 
         _clear_line()
-        _println("|" + "".join(barcade.BRAILLE[b] for b in game.screen) + "|")
+        _println("▐" + "".join(barcade.BRAILLE[b] for b in game.screen) + "▌")
+
+        _clear_line()
+        _println("🭢" + "🬂" * 32 + "🭗")
 
         _clear_line()
         _println(f"Score: {game.score}", flush=True)
